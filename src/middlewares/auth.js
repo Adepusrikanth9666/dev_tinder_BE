@@ -1,25 +1,24 @@
-const isAdmin = (req, res, next) => {
-  console.log("Admin middleware called");
-  const token = "abcd";
-  const isAdmin = token === "abcd";
-  if (!isAdmin) {
-    return res.status(403).send("Access denied. Admins only.");
-  } else {
-    console.log("admin data connection authorized");
+const jwt = require("jsonwebtoken");
+const User = require("../models/user");
+const userAuth = async (req, res, next) => {
+  // Read the token from cookies
+  try {
+    const cookies = req.cookies;
+    const { token } = cookies;
+    if (!token) {
+      throw new Error("Unauthorized No token provided,Please login..!!");
+    }
+    const decodedObj = await jwt.verify(token, "Dev@tinder@777");
+    const { _id } = decodedObj;
+    const user = await User.findById(_id);
+    if (!user) {
+      throw new Error("User not found");
+    }
+    req.user = user;
+    next();
+  } catch (err) {
+    res.status(400).send("Error: " + err.message);
   }
-  next();
 };
 
-const isUser = (req, res, next) => {
-  console.log("User middleware called");
-  const token = "abcd";
-  const isAdmin = token === "abcd";
-  if (!isAdmin) {
-    return res.status(403).send("Access denied. User only.");
-  } else {
-    console.log("User data connection authorized");
-  }
-  next();
-};
-
-module.exports = { isAdmin, isUser };
+module.exports = { userAuth };

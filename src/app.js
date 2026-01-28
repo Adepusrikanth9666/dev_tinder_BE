@@ -4,11 +4,14 @@ const User = require("./models/user");
 const { validateSignUpData } = require("./utils/validation");
 const bcrypt = require("bcrypt");
 const validate = require("validator");
+const cookieParse = require("cookie-parser");
+const jwt = require("jsonwebtoken");
+const { userAuth } = require("./middlewares/auth");
 
 const app = express();
 
 app.use(express.json());
-
+app.use(cookieParse());
 app.post("/signup", async (req, res) => {
   try {
     // validation of data
@@ -29,6 +32,15 @@ app.post("/signup", async (req, res) => {
   }
 });
 
+app.get("/profile", userAuth, async (req, res) => {
+  try {
+    const user = req.user;
+    res.send(user);
+  } catch (err) {
+    res.status(500).send("Error :" + err.message);
+  }
+});
+
 app.post("/login", async (req, res) => {
   try {
     const { emailId, password } = req.body;
@@ -40,10 +52,17 @@ app.post("/login", async (req, res) => {
       throw new Error("Invalid credentials");
     }
     const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
+    if (isPasswordValid) {
+      const token = await jwt.sign({ _id: user._id }, "Dev@tinder@777", {
+        expiresIn: "1d",
+      });
+      res.cookie("token", token, {
+        expires: new Date(Date.now() + 1 * 3600000),
+      });
+      res.send("User logged in successfully");
+    } else {
       throw new Error("Invalid credentials");
     }
-    res.send("Login successful");
   } catch (err) {
     res.status(500).send("Error :" + err.message);
   }
@@ -134,24 +153,10 @@ app.patch("/user/:id", async (req, res) => {
   }
 });
 
-// update the User by emailID
-
-// app.patch("/user", async (req, res) => {
-//   const query = req.body.emailId;
-//   const data = req.body;
-//   try {
-//     const user = await User.findOneAndUpdate({ emailId: query }, data, {
-//       runValidators: true,
-//     });
-//     if (!user) {
-//       res.status(500).send("User emailId not found");
-//     } else {
-//       res.send("User has been updated Successfully");
-//     }
-//   } catch (err) {
-//     res.status(500).send("Error updating user");
-//   }
-// });
+app.post("/sendConnectionRequest", userAuth, async (req, res) => {
+  const { firstName } = req.user;
+  res.send("Connection request sent by " + firstName + " successfully");
+});
 
 connectDB()
   .then(() => {
