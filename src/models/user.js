@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const validate = require("validator");
 
 const userSchema = new mongoose.Schema(
   {
@@ -14,6 +15,11 @@ const userSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
+      validate: (v) => {
+        if (!validate.isEmail(v)) {
+          throw new Error("Invalid email format");
+        }
+      },
     },
     password: { type: String, required: true, minlength: 6 },
     age: { type: Number, min: 18 },
@@ -30,6 +36,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       default:
         "https://thumbs.dreamstime.com/b/profile-logo-vector-icon-template-illustration-profile-template-icon-336477251.jpg",
+      validate: (v) => {
+        if (!validate.isURL(v)) {
+          throw new Error("Invalid URL format");
+        }
+      },
     },
     skills: [{ type: String }],
   },
