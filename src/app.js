@@ -1,23 +1,116 @@
 const express = require("express");
-const { isAdmin, isUser } = require("./middlewares/auth");
+const connectDB = require("./config/database");
+const User = require("./models/user");
 
 const app = express();
 
-app.use("/admin", isAdmin);
+app.use(express.json());
 
-app.get("/user/profile", isUser, (req, res) => {
-  console.log("user profile admin called");
-  res.send("Welcome to the User Profile");
+app.post("/signup", async (req, res) => {
+  const user = new User(req.body);
+  try {
+    await user.save();
+    res.send("User signed up successfully");
+  } catch (err) {
+    res.status(500).send("Error signing up user");
+  }
 });
 
-app.get("/admin/dashboard", (req, res) => {
-  res.send("Welcome to the Admin Dashboard");
+// get user by userID _id
+app.get("/user", async (req, res) => {
+  const userId = req.body.id;
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).send("User not found");
+    } else {
+      res.send(user);
+    }
+  } catch (err) {
+    send.status(500).send("Error fetching user data");
+  }
 });
 
-app.get("/admin/getAllUsers", (req, res) => {
-  res.send("get all users data");
+// get User by emailId
+app.get("/user", async (req, res) => {
+  const userEmail = req.body.emailId;
+
+  try {
+    const users = await User.findOne({ emailId: userEmail });
+    if (!users) {
+      return res.status(404).send("User not found");
+    } else {
+      console.log("User data fetched successfully");
+      res.send(users);
+    }
+  } catch (err) {
+    res.status(500).send("Error fetching user data");
+  }
 });
 
-app.listen(7777, () => {
-  console.log("Server is listening on port 7777");
+// get all users for feed
+app.get("/feed", async (req, res) => {
+  try {
+    const users = await User.find({});
+    res.send(users);
+  } catch (err) {
+    res.status(500).send("Error fetching users ");
+  }
 });
+
+// delete user by id
+app.delete("/user", async (req, res) => {
+  const userId = req.body.id;
+  try {
+    const deletedUser = await User.findByIdAndDelete(userId);
+    if (!deletedUser) {
+      return res.status(404).send("User not found");
+    }
+    res.send("User deleted successfully");
+  } catch (err) {
+    res.status(500).send("Error deleting user");
+  }
+});
+
+// update teh user by _id
+// app.patch("/user", async (req, res) => {
+//   const userId = req.body.id;
+//   const data = req.body;
+//   try {
+//     const user = await User.findByIdAndUpdate({ _id: userId }, data);
+//     if (!user) {
+//       res.status(500).send("User id not found");
+//     }
+//     res.send("User has been updated Succesfully");
+//   } catch (err) {
+//     res.status(500).send("Error updated user");
+//   }
+// });
+
+// update the User by emailID
+
+app.patch("/user", async (req, res) => {
+  const query = req.body.emailId;
+  const data = req.body;
+  try {
+    const user = await User.findOneAndUpdate({ emailId: query }, data);
+    if (!user) {
+      res.status(500).send("User emailId not found");
+    } else {
+      res.send("User has been updated Succesfully");
+    }
+  } catch (err) {
+    res.status(500).send("Error updating user");
+  }
+});
+
+connectDB()
+  .then(() => {
+    console.log("Database connected successfully");
+    app.listen(7777, () => {
+      console.log("Server is listening on port 7777");
+    });
+  })
+  .catch((err) => {
+    console.error("Database connection failed:", err);
+  });
