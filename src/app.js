@@ -51,11 +51,9 @@ app.post("/login", async (req, res) => {
     if (!user) {
       throw new Error("Invalid credentials");
     }
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await user.validatePassword(password);
     if (isPasswordValid) {
-      const token = await jwt.sign({ _id: user._id }, "Dev@tinder@777", {
-        expiresIn: "1d",
-      });
+      const token = await user.getJwtToken();
       res.cookie("token", token, {
         expires: new Date(Date.now() + 1 * 3600000),
       });
@@ -101,7 +99,7 @@ app.get("/user", async (req, res) => {
 });
 
 // get all users for feed
-app.get("/feed", async (req, res) => {
+app.get("/feed", userAuth, async (req, res) => {
   try {
     const users = await User.find({});
     res.send(users);
