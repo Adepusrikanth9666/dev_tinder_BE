@@ -73,38 +73,52 @@ app.delete("/user", async (req, res) => {
 });
 
 // update teh user by _id
-// app.patch("/user", async (req, res) => {
-//   const userId = req.body.id;
-//   const data = req.body;
-//   try {
-//     const user = await User.findByIdAndUpdate({ _id: userId }, data);
-//     if (!user) {
-//       res.status(500).send("User id not found");
-//     }
-//     res.send("User has been updated Succesfully");
-//   } catch (err) {
-//     res.status(500).send("Error updated user");
-//   }
-// });
+app.patch("/user/:id", async (req, res) => {
+  const userId = req.params.id;
+  const data = req.body;
+  try {
+    const USER_UPDATES_ALLOWED = [
+      "imageUrl",
+      "about",
+      "skills",
+      "age",
+      "gender",
+    ];
+    const updates = Object.keys(data);
+    const isValidOperation = updates.every((update) =>
+      USER_UPDATES_ALLOWED.includes(update),
+    );
+    if (!isValidOperation) {
+      return res.status(400).send({ error: "Invalid updates!" });
+    }
+    const user = await User.findByIdAndUpdate(userId, data);
+    if (!user) {
+      res.status(500).send("User id not found");
+    }
+    res.send("User has been updated Succesfully");
+  } catch (err) {
+    res.status(500).send("Error updated user");
+  }
+});
 
 // update the User by emailID
 
-app.patch("/user", async (req, res) => {
-  const query = req.body.emailId;
-  const data = req.body;
-  try {
-    const user = await User.findOneAndUpdate({ emailId: query }, data, {
-      runValidators: true,
-    });
-    if (!user) {
-      res.status(500).send("User emailId not found");
-    } else {
-      res.send("User has been updated Successfully");
-    }
-  } catch (err) {
-    res.status(500).send("Error updating user");
-  }
-});
+// app.patch("/user", async (req, res) => {
+//   const query = req.body.emailId;
+//   const data = req.body;
+//   try {
+//     const user = await User.findOneAndUpdate({ emailId: query }, data, {
+//       runValidators: true,
+//     });
+//     if (!user) {
+//       res.status(500).send("User emailId not found");
+//     } else {
+//       res.send("User has been updated Successfully");
+//     }
+//   } catch (err) {
+//     res.status(500).send("Error updating user");
+//   }
+// });
 
 connectDB()
   .then(() => {
