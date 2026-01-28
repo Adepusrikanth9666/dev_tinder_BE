@@ -3,6 +3,7 @@ const connectDB = require("./config/database");
 const User = require("./models/user");
 const { validateSignUpData } = require("./utils/validation");
 const bcrypt = require("bcrypt");
+const validate = require("validator");
 
 const app = express();
 
@@ -25,6 +26,26 @@ app.post("/signup", async (req, res) => {
     res.send("User signed up successfully");
   } catch (err) {
     res.status(400).send("Error :" + err.message);
+  }
+});
+
+app.post("/login", async (req, res) => {
+  try {
+    const { emailId, password } = req.body;
+    if (!validate.isEmail(emailId)) {
+      throw new Error("Not a valid Email ID");
+    }
+    const user = await User.findOne({ emailId: emailId });
+    if (!user) {
+      throw new Error("Invalid credentials");
+    }
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      throw new Error("Invalid credentials");
+    }
+    res.send("Login successful");
+  } catch (err) {
+    res.status(500).send("Error :" + err.message);
   }
 });
 
