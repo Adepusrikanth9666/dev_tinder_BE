@@ -93,11 +93,13 @@ app.patch("/user", async (req, res) => {
   const query = req.body.emailId;
   const data = req.body;
   try {
-    const user = await User.findOneAndUpdate({ emailId: query }, data);
+    const user = await User.findOneAndUpdate({ emailId: query }, data, {
+      runValidators: true,
+    });
     if (!user) {
       res.status(500).send("User emailId not found");
     } else {
-      res.send("User has been updated Succesfully");
+      res.send("User has been updated Successfully");
     }
   } catch (err) {
     res.status(500).send("Error updating user");
