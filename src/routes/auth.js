@@ -1,6 +1,5 @@
 const express = require("express");
 const { validateSignUpData } = require("../utils/validation");
-// const { validate } = require("../models/user");
 const validate = require("validator");
 
 const User = require("../models/user");
@@ -51,6 +50,13 @@ authRouter.post("/login", async (req, res) => {
   } catch (err) {
     res.status(500).send("Error :" + err.message);
   }
+});
+
+authRouter.post("/logout", async (req, res) => {
+  res.cookie("token", null, {
+    expires: new Date(Date.now()),
+  });
+  res.send("User logged out successfully");
 });
 
 module.exports = authRouter;
